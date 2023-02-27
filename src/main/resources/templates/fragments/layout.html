@@ -82,6 +82,12 @@
           <div class="col-12 text-center">
             <img src="../static/images/spring-logo.svg" th:src="@{/resources/images/spring-logo.svg}" alt="VMware Tanzu Logo" class="logo">
           </div>
+          <div class="text-center">
+            <span th:utext="'Instance type: ' + ${ec2InstanceType}">Instance type</span>
+            <img src="../static/resources/images/Graviton-120x120c.jpg" width="60" height="60"
+              th:if="${isGravitonInstance}"
+              th:src="@{resources/images/Graviton-120x120c.jpg}" />
+          </div>
         </div>
       </div>
     </div>

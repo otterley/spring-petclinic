@@ -1,0 +1,10 @@
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: default
+spec:
+  securityGroupSelector:
+    aws:eks:cluster-name: Cluster9EE0221C-91e6aaf5bfa049c994e911f11a460298
+  subnetSelector:
+    aws-cdk:subnet-type: Private
+    aws:cloudformation:stack-name: PetClinicStack

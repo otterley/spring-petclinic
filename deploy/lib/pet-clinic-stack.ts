@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { type Construct } from 'constructs'
-import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
+import { InstanceType, Port, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import * as eks from 'aws-cdk-lib/aws-eks'
 import * as kms from 'aws-cdk-lib/aws-kms'
 import { AlbControllerVersion, CoreDnsComputeType } from 'aws-cdk-lib/aws-eks'
@@ -11,9 +11,12 @@ import { CodeStarConnectionsSourceAction, CodeBuildAction } from 'aws-cdk-lib/aw
 import * as connections from 'aws-cdk-lib/aws-codestarconnections'
 import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 import { Repository } from 'aws-cdk-lib/aws-ecr'
-import { BuildSpec } from 'aws-cdk-lib/aws-codebuild'
+import { BuildEnvironmentVariableType, BuildSpec } from 'aws-cdk-lib/aws-codebuild'
 import { Effect, ManagedPolicy, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam'
 import { CfnOutput } from 'aws-cdk-lib'
+import { Credentials, DatabaseInstance, DatabaseInstanceEngine, MysqlEngineVersion } from 'aws-cdk-lib/aws-rds'
+import { Key } from 'aws-cdk-lib/aws-kms'
+import { ISecret } from 'aws-cdk-lib/aws-secretsmanager'
 
 export class PetClinicStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -89,9 +92,6 @@ export class PetClinicStack extends cdk.Stack {
       value: karpenterServiceAccount.role.roleArn
     })
 
-    //const chart = new cdk8s.Chart(new cdk8s.App(), 'Demo')
-
-
     cluster.addHelmChart('MetricsServer', {
       chart: 'metrics-server',
       release: 'metrics-server',
@@ -100,7 +100,21 @@ export class PetClinicStack extends cdk.Stack {
       namespace: 'kube-system'
     })
 
-    //cluster.addCdk8sChart('DemoChart', chart)
+
+    // Database
+    const credentialsKey = new Key(this, 'RDSEncryptionKey')
+    const credentials = Credentials.fromGeneratedSecret('admin', {
+      encryptionKey: credentialsKey
+    })
+
+    const database = new DatabaseInstance(this, 'Database', {
+      credentials,
+      engine: DatabaseInstanceEngine.mysql({version: MysqlEngineVersion.VER_8_0}),
+      instanceType: new InstanceType('t3.micro'),
+      vpc: vpc,
+      vpcSubnets: vpc.selectSubnets({subnetType: SubnetType.PRIVATE_WITH_EGRESS}),
+    })
+    database.connections.allowFrom(cluster.clusterSecurityGroup, Port.tcp(3306))
 
     // Set up Code Pipeline
     const pipeline = new Pipeline(this, 'BuildAndReleasePipeline')
@@ -273,7 +287,10 @@ export class PetClinicStack extends cdk.Stack {
           AWS_DEFAULT_REGION: { value: this.region },
           AWS_ACCOUNT_ID: { value: this.account },
           CLUSTER_NAME: { value: cluster.clusterName },
-          CLUSTER_ROLE_ARN: { value: cluster.kubectlRole?.roleArn }
+          CLUSTER_ROLE_ARN: { value: cluster.kubectlRole?.roleArn },
+          MYSQL_URL: { value: `jdbc:mysql://${database.dbInstanceEndpointAddress}/petclinic` },
+          MYSQL_USER: { value: credentials.username },
+          MYSQL_PASS: { type: BuildEnvironmentVariableType.SECRETS_MANAGER, value: `${database.secret?.secretArn}:password` }
         },
       },
       buildSpec: BuildSpec.fromObject({
@@ -296,7 +313,16 @@ export class PetClinicStack extends cdk.Stack {
             commands: [
               'echo "- op: replace" >> deploy/image.patch.yaml',
               'echo "  path: /spec/template/spec/containers/0/image" >> deploy/image.patch.yaml',
-              'echo "  value: ${IMAGE_REPO_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION:0:8}" >> deploy/image.patch.yaml'
+              'echo "  value: ${IMAGE_REPO_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION:0:8}" >> deploy/image.patch.yaml',
+              'echo "- op: replace" >> deploy/image.patch.yaml',
+              'echo "  path: /spec/template/spec/containers/0/env/0/value" >> deploy/image.patch.yaml',
+              'echo "  value: ${MYSQL_URL}" >> deploy/image.patch.yaml',
+              'echo "- op: replace" >> deploy/image.patch.yaml',
+              'echo "  path: /spec/template/spec/containers/0/env/1/value" >> deploy/image.patch.yaml',
+              'echo "  value: ${MYSQL_USER}" >> deploy/image.patch.yaml',
+              'echo "- op: replace" >> deploy/image.patch.yaml',
+              'echo "  path: /spec/template/spec/containers/0/env/2/value" >> deploy/image.patch.yaml',
+              'echo "  value: ${MYSQL_PASS}" >> deploy/image.patch.yaml',
             ]
           },
           build: {
@@ -307,6 +333,7 @@ export class PetClinicStack extends cdk.Stack {
         }
       })
     })
+    credentialsKey.grantDecrypt(deployProject)
     deployProject.role?.addToPrincipalPolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['eks:DescribeCluster'],

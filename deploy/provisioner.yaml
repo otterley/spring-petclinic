@@ -32,5 +32,5 @@ spec:
   - key: karpenter.k8s.aws/instance-generation
     operator: Gt
     values:
-    - "2"
+    - "4"
   ttlSecondsAfterEmpty: 30

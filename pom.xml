@@ -35,6 +35,18 @@
 
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>2.20.13</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- Spring and Spring Boot dependencies -->
     <dependency>
@@ -138,6 +150,14 @@
       <artifactId>jakarta.xml.bind-api</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>imds</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>url-connection-client</artifactId>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>

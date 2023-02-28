@@ -288,9 +288,7 @@ export class PetClinicStack extends cdk.Stack {
           AWS_ACCOUNT_ID: { value: this.account },
           CLUSTER_NAME: { value: cluster.clusterName },
           CLUSTER_ROLE_ARN: { value: cluster.kubectlRole?.roleArn },
-          MYSQL_URL: { value: `jdbc:mysql://${database.dbInstanceEndpointAddress}/petclinic` },
-          MYSQL_USER: { value: credentials.username },
-          MYSQL_PASS: { type: BuildEnvironmentVariableType.SECRETS_MANAGER, value: `${database.secret?.secretArn}:password` }
+          MYSQL_URL: { value: `jdbc:mysql://${database.dbInstanceEndpointAddress}/petclinic` }
         },
       },
       buildSpec: BuildSpec.fromObject({
@@ -316,13 +314,7 @@ export class PetClinicStack extends cdk.Stack {
               'echo "  value: ${IMAGE_REPO_URI}:${CODEBUILD_RESOLVED_SOURCE_VERSION:0:8}" >> deploy/image.patch.yaml',
               'echo "- op: replace" >> deploy/image.patch.yaml',
               'echo "  path: /spec/template/spec/containers/0/env/0/value" >> deploy/image.patch.yaml',
-              'echo "  value: ${MYSQL_URL}" >> deploy/image.patch.yaml',
-              'echo "- op: replace" >> deploy/image.patch.yaml',
-              'echo "  path: /spec/template/spec/containers/0/env/1/value" >> deploy/image.patch.yaml',
-              'echo "  value: ${MYSQL_USER}" >> deploy/image.patch.yaml',
-              'echo "- op: replace" >> deploy/image.patch.yaml',
-              'echo "  path: /spec/template/spec/containers/0/env/2/value" >> deploy/image.patch.yaml',
-              'echo "  value: ${MYSQL_PASS}" >> deploy/image.patch.yaml',
+              'echo "  value: ${MYSQL_URL}" >> deploy/image.patch.yaml'
             ]
           },
           build: {

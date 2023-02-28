@@ -115,7 +115,8 @@ export class PetClinicStack extends cdk.Stack {
       owner: 'otterley',
       repo: 'spring-petclinic',
       branch: 'aws-under-the-hood',
-      output: sourceOutput
+      output: sourceOutput,
+      triggerOnPush: true
     }))
 
     // Build stage

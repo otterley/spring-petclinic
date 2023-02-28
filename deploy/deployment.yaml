@@ -38,10 +38,6 @@ spec:
         env:
           - name: MYSQL_URL
             value: $MYSQL_URL
-          - name: MYSQL_USER
-            value: $MYSQL_USER
-          - name: MYSQL_PASS
-            value: $MYSQL_PASS
         ports:
         - containerPort: 8080
         resources:

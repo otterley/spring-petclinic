@@ -322,7 +322,7 @@ export class PetClinicStack extends cdk.Stack {
           },
           post_build: {
             commands: [
-              '/tmp/kubectl rollout status deployment/spring-petclinic --timeout=3m'
+              '/tmp/kubectl rollout status deployment/spring-petclinic --timeout=5m'
             ]
           }
         }

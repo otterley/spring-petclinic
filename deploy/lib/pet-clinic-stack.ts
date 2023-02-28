@@ -16,7 +16,7 @@ import { Effect, ManagedPolicy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
 import { CfnOutput } from 'aws-cdk-lib'
 
 export class PetClinicStack extends cdk.Stack {
-  constructor (scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
     const vpc = new Vpc(this, 'Vpc', {
@@ -266,7 +266,7 @@ export class PetClinicStack extends cdk.Stack {
           AWS_DEFAULT_REGION: { value: this.region },
           AWS_ACCOUNT_ID: { value: this.account },
           CLUSTER_NAME: { value: cluster.clusterName },
-          CLUSTER_ROLE_ARN: { value: cluster.adminRole.roleArn }
+          CLUSTER_ROLE_ARN: { value: cluster.kubectlRole?.roleArn }
         },
       },
       buildSpec: BuildSpec.fromObject({
@@ -277,6 +277,9 @@ export class PetClinicStack extends cdk.Stack {
         phases: {
           install: {
             commands: [
+              'export PATH=/usr/local/bin:$PATH',
+              'curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o /tmp/awscliv2.zip',
+              '(cd /tmp && unzip -q awscliv2.zip && ./aws/install)',
               'curl -o /tmp/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.10/2023-01-30/bin/linux/arm64/kubectl',
               'chmod +x /tmp/kubectl',
               'aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION --role-arn $CLUSTER_ROLE_ARN'
@@ -302,6 +305,13 @@ export class PetClinicStack extends cdk.Stack {
       actions: ['eks:DescribeCluster'],
       resources: [cluster.clusterArn]
     }))
+    if (cluster.kubectlRole) {
+      deployProject.role?.addToPrincipalPolicy(new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ['sts:AssumeRole'],
+        resources: [cluster.kubectlRole.roleArn]
+      }))
+    }
     deployStage.addAction(new CodeBuildAction({
       actionName: 'ToCluster',
       input: sourceOutput,

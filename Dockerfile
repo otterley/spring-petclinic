@@ -12,4 +12,4 @@ RUN ./mvnw package -DskipTests
 
 FROM public.ecr.aws/amazoncorretto/amazoncorretto:17
 COPY --from=build /workspace/app/target/*.jar /app.jar
-ENTRYPOINT [ "java", "-D", "spring.profiles.active=mysql", "-jar", "/app.jar" ]
+ENTRYPOINT [ "java", "-Dspring.profiles.active=mysql", "-jar", "/app.jar" ]

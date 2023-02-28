@@ -12,7 +12,7 @@ import * as connections from 'aws-cdk-lib/aws-codestarconnections'
 import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 import { Repository } from 'aws-cdk-lib/aws-ecr'
 import { BuildSpec } from 'aws-cdk-lib/aws-codebuild'
-import { Effect, ManagedPolicy, PolicyStatement } from 'aws-cdk-lib/aws-iam'
+import { Effect, ManagedPolicy, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam'
 import { CfnOutput } from 'aws-cdk-lib'
 
 export class PetClinicStack extends cdk.Stack {
@@ -48,6 +48,7 @@ export class PetClinicStack extends cdk.Stack {
         version: AlbControllerVersion.V2_4_1
       },
     })
+
     new CfnOutput(this, 'ClusterName', {
       value: cluster.clusterName
     })
@@ -57,6 +58,12 @@ export class PetClinicStack extends cdk.Stack {
     })
     cluster.addFargateProfile('System', {
       selectors: [{ namespace: 'kube-system' }]
+    })
+
+    const nodeRole = Role.fromRoleName(this, 'NodeRole', 'Karpenter-Cluster9EE0221C-91e6aa-KarpenterNodeRole-2WMP46NCP2N7');
+    cluster.awsAuth.addRoleMapping(nodeRole, {
+      username: 'system:node:{{EC2PrivateDNSName}}',
+      groups: ['system:bootstrappers', 'system:nodes']
     })
 
     const karpenterNamespace = cluster.addManifest('Karpenter', {

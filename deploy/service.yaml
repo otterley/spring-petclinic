@@ -5,6 +5,7 @@ metadata:
 spec:
   selector:
     app: spring-petclinic
+  type: NodePort
   ports:
     - protocol: TCP
       port: 8080

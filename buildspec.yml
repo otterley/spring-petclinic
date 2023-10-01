@@ -8,6 +8,9 @@ phases:
     commands:
       - echo Build started on `date`
       - ./mvnw package
+      - "ls -l $HOME/.m2/repository || :"
+      - "ls -l /.m2/repository || :"
+      - "ls -l .m2/repository || :"
   post_build:
     commands:
       - echo Build completed on `date`

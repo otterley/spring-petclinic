@@ -16,8 +16,13 @@ public class EC2InstanceAdvice {
 	@ModelAttribute("ec2InstanceType")
 	public String getEC2InstanceType() {
 		if (instanceType == null) {
-			Ec2MetadataResponse ec2MetadataResponse = ec2MetadataClient.get("/latest/meta-data/instance-type");
-			instanceType = ec2MetadataResponse.asString();
+			try {
+				Ec2MetadataResponse ec2MetadataResponse = ec2MetadataClient.get("/latest/meta-data/instance-type");
+				instanceType = ec2MetadataResponse.asString();
+			}
+			catch (software.amazon.awssdk.core.exception.SdkClientException e) {
+				instanceType = "unknown";
+			}
 		}
 		return instanceType;
 	}

@@ -1,0 +1,13 @@
+version: 0.0
+os: linux
+files:
+  - source: target
+    destination: /app/spring-pet-clinic
+  - source: systemd/spring-pet-clinic.service
+    destination: /etc/systemd/system/spring-pet-clinic.service
+file_exists_behavior: OVERWRITE
+hooks:
+  ApplicationStart:
+    - location: codedeploy/scripts/start.sh
+  ApplicationStop:
+    - location: codedeploy/scripts/stop.sh

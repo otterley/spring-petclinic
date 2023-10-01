@@ -1,0 +1,8 @@
+[Unit]
+Description=Spring Pet Clinic
+
+[Service]
+ExecStart=/bin/sh -c '/usr/bin/java -jar /app/spring-pet-clinic/*.jar'
+
+[Install]
+WantedBy=multi-user.target

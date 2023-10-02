@@ -2,7 +2,7 @@
 Description=Spring Pet Clinic
 
 [Service]
-ExecStart=/bin/sh -c '/usr/bin/java -jar /app/spring-pet-clinic/*.jar'
+ExecStart=/app/spring-pet-clinic/start.sh
 
 [Install]
 WantedBy=multi-user.target

@@ -88,6 +88,9 @@
               th:if="${isGravitonInstance}"
               th:src="@{/resources/images/Graviton-120x120c.jpg}" />
           </div>
+          <div class="text-center">
+            <span th:utext="'Instance ID: ' + ${ec2InstanceId}">Instance ID</span>
+          </div>
         </div>
       </div>
     </div>

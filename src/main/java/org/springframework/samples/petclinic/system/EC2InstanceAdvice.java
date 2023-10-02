@@ -11,6 +11,8 @@ public class EC2InstanceAdvice {
 
 	private static Ec2MetadataClient ec2MetadataClient = Ec2MetadataClient.create();
 
+	private static String instanceId;
+
 	private static String instanceType;
 
 	@ModelAttribute("ec2InstanceType")
@@ -25,6 +27,20 @@ public class EC2InstanceAdvice {
 			}
 		}
 		return instanceType;
+	}
+
+	@ModelAttribute("ec2InstanceId")
+	public String getEC2InstanceId() {
+		if (instanceId == null) {
+			try {
+				Ec2MetadataResponse ec2MetadataResponse = ec2MetadataClient.get("/latest/meta-data/instance-id");
+				instanceId = ec2MetadataResponse.asString();
+			}
+			catch (software.amazon.awssdk.core.exception.SdkClientException e) {
+				instanceId = "unknown";
+			}
+		}
+		return instanceId;
 	}
 
 	@ModelAttribute("isGravitonInstance")

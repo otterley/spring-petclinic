@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: petclinic
+    arch: amd64
+  name: petclinic-x86
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: petclinic
+      arch: amd64
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: petclinic
+        arch: amd64
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: eks.amazonaws.com/nodegroup
+                operator: In
+                values:
+                - app-x86
+      containers:
+      - image: 366253785729.dkr.ecr.us-west-2.amazonaws.com/petclinic:latest
+        imagePullPolicy: Always
+        name: petclinic
+        env:
+        - name: spring_profiles_active
+          value: mysql
+        - name: MYSQL_URL
+          value: jdbc:mysql://petclinic.ccv0ggraeh5l.us-west-2.rds.amazonaws.com/petclinic
+        - name: MYSQL_USER
+          value: admin
+        - name: MYSQL_PASS
+          value: WbppVtysDZvsZoVF25lK
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 1.0
+            memory: 2G
+          limits:
+            memory: 2G
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: petclinic
+    arch: amd64
+  name: petclinic-x86
+spec:
+  ports:
+  - name: main
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: petclinic
+    arch: amd64
+  type: NodePort
